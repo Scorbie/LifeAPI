@@ -5,12 +5,12 @@ int Assert(int counter, int expected, const char* testName)
 {
 	if(counter != expected)
 	{
-		printf("\n\n %s Failed :(\n", testName);
+		printf("\n   %s Failed :(\n", testName);
 		return FAIL;
 	}
 	else
 	{
-		printf("\n\n %s Succeeded!!\n", testName);
+		printf("\n   %s Succeeded!!\n", testName);
 		
 		return SUCCESS;
 	}
@@ -20,12 +20,12 @@ int Assert(char* counter, char* expected, const char* testName)
 {
 	if(strcmp(counter, expected) != 0)
 	{
-		printf("\n\n %s Failed :(\n", testName);
+		printf("\n   %s Failed :(\n", testName);
 		return FAIL;
 	}
 	else
 	{
-		printf("\n\n %s Succeeded!!\n", testName);
+		printf("\n   %s Succeeded!!\n", testName);
 		
 		return SUCCESS;
 	}
@@ -64,11 +64,11 @@ int Test1()
 		if(pop != GetPop())
 			continue;
 		
-		//Just iterate - the glider will run all over the place - we're on torus anyway 
+		//Just iterate - the glider will run all over the place - we're on torus anyway
 		Run(200);
 		
 		if(GetPop() == 0 && strlen(GlobalState->emittedGliders->value) > 0)
-		{	
+		{
 			counter++;
 		}
 	}
@@ -218,7 +218,9 @@ int Test6()
 	SaveResults(results, "results.txt");
 	LifeResults*  loaded = LoadResults("results.txt");
 
-	return (Assert(results->size, 15, "Test6 Part 1") == SUCCESS) && (Assert(AreEqual(results->results[7], loaded->results[7]), YES, "Test6 Part 2") == SUCCESS);
+	return (Assert(results->size, 15, "Test6 Part 1") == SUCCESS)
+		&& (Assert(AreEqual(results->results[7], loaded->results[7]),
+				YES, "Test6 Part 2") == SUCCESS);
 }
 
 int Test7()
@@ -239,6 +241,39 @@ int Test7()
 	return (Assert(GetCell(result, 0, 0) * GetCell(result, 10, 10), 1, "Test7") == SUCCESS);
 }
 
+int Test8_1()
+{
+	printf("\n Gliders removal super basic");
+	LifeState* pat = NewState("3o$o$bo!");
+	New();
+	PutState(pat);
+	Run(150);
+	return Assert(GetPop(), 0, "Test8_1") == SUCCESS;
+}
+
+
+int Test8_2()
+{
+	printf("\n Gliders removal super basic 2");
+	LifeState* pat = NewState("3o$o$bo!");
+	New();
+	PutState(pat);
+	Run(150);
+	return Assert(GlobalState->emittedGliders->size > 1, 1,
+		"Test8_2") == SUCCESS;
+}
+
+int Test8_3()
+{
+	printf("\n Gliders removal super basic 3");
+	LifeState* pat = NewState("3o$o$bo!");
+	New();
+	PutState(pat);
+	Run(150);
+	return Assert(GlobalState->emittedGliders->value, "(-31,-31,124,2)",
+		"Test8_3") == SUCCESS;
+}
+
 int Test8()
 {
 	printf("\n Gliders removal basic");
@@ -252,7 +287,12 @@ int Test8()
 	PutState(pat, -13, 11, 1, 0, 0, -1);
 	Run(150);
 	
-	return (Assert(GlobalState->emittedGliders->value, "(2,22,62,62)(1,60,74,1)(3,2,74,62)(0,0,126,1)", "Test8") == SUCCESS);
+	return (
+		Assert(
+			GlobalState->emittedGliders->value,
+			"(30,-10,62,3)(30,-29,72,0)(-31,30,74,1)(-31,-31,124,2)", "Test8"
+		) == SUCCESS
+	);
 }
 
 
@@ -278,6 +318,15 @@ int RunTests()
 	if(Test7() == FAIL)
 		result = FAIL;
 	
+	if(Test8_1() == FAIL)
+		result = FAIL;
+	
+	if(Test8_2() == FAIL)
+		result = FAIL;
+	
+	if(Test8_3() == FAIL)
+		result = FAIL;
+	
 	if(Test8() == FAIL)
 		result = FAIL;
 	
@@ -293,7 +342,7 @@ int main()
 
 	if(RunTests() == SUCCESS)
 		printf("\n\n ==========Finished all UnitTests succesfully!! Horray!! ===========");
-	else	
+	else
 		printf("\n\n ==========Finished, some UnitTests failed :( Please fix them ======");
 		
 	getchar();
