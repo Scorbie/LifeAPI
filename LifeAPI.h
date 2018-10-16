@@ -566,10 +566,9 @@ void FlipX(int idx)
 
 void Transform(LifeState* state, int dx, int dy, int dxx, int dxy, int dyx, int dyy)
 {
-	ClearData(Temp2);
 	ClearData(Temp1);
+	ClearData(Temp2);
 	Copy(Temp1, state);
-	Move(Temp1, dx, dy);
 
 	for(int i = 0; i < N; i++)
 	{
@@ -581,12 +580,12 @@ void Transform(LifeState* state, int dx, int dy, int dxx, int dxy, int dyx, int 
 			int x1 = x * dxx + y * dxy;
 			int y1 = x * dyx + y * dyy;
 
-			int val = GetCell(Temp1, x1, y1);
-
-			SetCell(Temp2, x, y, val);
+			int val = GetCell(Temp1, x, y);
+			SetCell(Temp2, x1, y1, val);
 		}
 	}
 
+	Move(Temp2, dx, dy);
 	Copy(state, Temp2);
 	RecalculateMinMax(state);
 }
@@ -1140,8 +1139,8 @@ void inline Add_Init(uint64_t& b2, uint64_t& b1, uint64_t &b0, uint64_t& val)
 uint64_t inline Evolve(const uint64_t& temp, const uint64_t& bU0, const uint64_t& bU1, const uint64_t& bB0, const uint64_t& bB1)
 {
 	uint64_t sum0, sum1, sum2;
-	sum0 = temp << 1;
-	Add_Init(sum1, sum0, temp >> 1);
+	sum0 = CirculateLeft(temp);
+	Add_Init(sum1, sum0, CirculateRight(temp));
 
 	Add(sum1, sum0, bU0);
 	Add_Init(sum2, sum1, bU1);
@@ -1167,8 +1166,8 @@ void IterateState(LifeState *lifstate)
 		uint64_t l, r, temp;
 
 		temp = state[i];
-		l = temp << 1;
-		r = temp >> 1;
+		l = CirculateLeft(temp);
+		r = CirculateRight(temp);
 		bit0[i] = l ^ r ^ temp;
 		bit1[i] = ((l | r) & temp) | (l & r);
 	}
@@ -1178,13 +1177,13 @@ void IterateState(LifeState *lifstate)
 
 	if (min == 0)
 	{
-		tempState[0] = Evolve(state[0], 0, 0, bit0[2], bit1[2]);
+		tempState[0] = Evolve(state[0], 0, 0, bit0[1], bit1[1]);
 		start = 1;
 	}
 
 	if (max == N - 1)
 	{
-		tempState[N - 1] = Evolve(state[0], bit0[N - 2], bit1[N - 2], 0, 0);
+		tempState[N - 1] = Evolve(state[N - 1], bit0[N - 2], bit1[N - 2], 0, 0);
 		last = N - 2;
 	}
 
@@ -1374,7 +1373,7 @@ void New()
 		// _glidersTarget: The canonical form (and rotations)
 		// Direction: 1, 2, 3, 4th quadrant, respectively.
 		// In golly, this is SE, SW, NW, NE (going glockwise).
-		_glidersTarget[0] = NewTargetLocator("o$2bo$3o!", -2, -2); // +x +y
+		_glidersTarget[0] = NewTargetLocator("bo$2bo$3o!", -2, -2); // +x +y
 		_glidersTarget[1] = NewTargetLocator("o$obo$2o!", 0, -2); // -x +y
 		_glidersTarget[2] = NewTargetLocator("3o$o$bo!"); // -x -y
 		_glidersTarget[3] = NewTargetLocator("b2o$obo$2bo!", -2, 0); // +x -y

@@ -5,27 +5,27 @@ int Assert(int counter, int expected, const char* testName)
 {
 	if(counter != expected)
 	{
-		printf("\n   %s Failed :(\n", testName);
+		printf("    %s Failed :(\n", testName);
 		return FAIL;
 	}
 	else
 	{
-		printf("\n   %s Succeeded!!\n", testName);
+		printf("    %s Succeeded!!\n", testName);
 		
 		return SUCCESS;
 	}
 }
 
-int Assert(char* counter, char* expected, const char* testName)
+int Assert(const char* counter, const char *expected, const char* testName)
 {
 	if(strcmp(counter, expected) != 0)
 	{
-		printf("\n   %s Failed :(\n", testName);
+		printf("    %s Failed :(\n", testName);
 		return FAIL;
 	}
 	else
 	{
-		printf("\n   %s Succeeded!!\n", testName);
+		printf("    %s Succeeded!!\n", testName);
 		
 		return SUCCESS;
 	}
@@ -37,7 +37,7 @@ int Test1()
 {
 	int counter = 0; 
 	
-	printf("\n Tests Life iteration");
+	printf("Tests Life iteration\n");
 	
 	New();
 	LifeState* blck =  NewState("2o$2o!");
@@ -81,7 +81,7 @@ int Test2()
 {
 	int counter = 0; 
 	
-	printf("\n Tests Life iteration");
+	printf("Tests Life iteration\n");
 	
 	
 	New();
@@ -133,7 +133,7 @@ int Test2()
 
 int Test3()
 {
-	printf("\n Test advanced target matching");
+	printf("Test advanced target matching\n");
 	
 	int counter = 0; 
 	
@@ -175,7 +175,7 @@ int Test3()
 
 int Test4()
 {
-	printf("\n Tests Boundary");
+	printf("Tests Boundary\n");
 	
 	New();
 	
@@ -190,7 +190,7 @@ int Test4()
 
 int Test5()
 {
-	printf("\n RLE Parsing");
+	printf("RLE Parsing\n");
 	
 	New();
 	
@@ -202,7 +202,7 @@ int Test5()
 
 int Test6()
 {
-	printf("\n Save-Load Results test");
+	printf("Save-Load Results test\n");
 	
 	LifeState* pat = NewState("3o$o$bo!");
 	LifeResults* results = NewResults();
@@ -225,7 +225,7 @@ int Test6()
 
 int Test7()
 {
-	printf("\n Locators basic test");
+	printf("Locators basic test\n");
 	
 	LifeState* pat = NewState("3o$o$bo!");
 	LifeState* result = NewState();
@@ -243,7 +243,7 @@ int Test7()
 
 int Test8_1()
 {
-	printf("\n Gliders removal super basic");
+	printf("Gliders removal super basic\n");
 	LifeState* pat = NewState("3o$o$bo!");
 	New();
 	PutState(pat);
@@ -254,7 +254,7 @@ int Test8_1()
 
 int Test8_2()
 {
-	printf("\n Gliders removal super basic 2");
+	printf("Gliders removal super basic 2\n");
 	LifeState* pat = NewState("3o$o$bo!");
 	New();
 	PutState(pat);
@@ -265,7 +265,7 @@ int Test8_2()
 
 int Test8_3()
 {
-	printf("\n Gliders removal super basic 3");
+	printf("Gliders removal super basic 3\n");
 	LifeState* pat = NewState("3o$o$bo!");
 	New();
 	PutState(pat);
@@ -276,8 +276,12 @@ int Test8_3()
 
 int Test8()
 {
-	printf("\n Gliders removal basic");
-	
+	printf("Test8:\n"
+		"PutState with transformations\n"
+		"+ Life iterations\n"
+		"+ Glider removal\n"
+	);
+
 	LifeState* pat = NewState("3o$o$bo!");
 	
 	New();
@@ -286,13 +290,11 @@ int Test8()
 	PutState(pat, 12, 17, -1, 0, 0, -1);
 	PutState(pat, -13, 11, 1, 0, 0, -1);
 	Run(150);
-	
-	return (
-		Assert(
-			GlobalState->emittedGliders->value,
-			"(30,-10,62,3)(30,-29,72,0)(-31,30,74,1)(-31,-31,124,2)", "Test8"
-		) == SUCCESS
-	);
+
+	return Assert(
+		GlobalState->emittedGliders->value,
+		"(30,-10,62,3)(30,-29,72,0)(-31,30,74,1)(-31,-31,124,2)", "Test8"
+	) == SUCCESS;
 }
 
 
@@ -302,34 +304,34 @@ int RunTests()
 		
 	if(Test1() == FAIL)
 		result = FAIL;
-		
+
 	if(Test2() == FAIL)
 		result = FAIL;
-		
+
 	if(Test4() == FAIL)
 		result = FAIL;
-	
+
 	if(Test5() == FAIL)
 		result = FAIL;
-		
+
 	if(Test6() == FAIL)
 		result = FAIL;
-	
+
 	if(Test7() == FAIL)
 		result = FAIL;
-	
+
 	if(Test8_1() == FAIL)
 		result = FAIL;
-	
+
 	if(Test8_2() == FAIL)
 		result = FAIL;
-	
+
 	if(Test8_3() == FAIL)
 		result = FAIL;
-	
+
 	if(Test8() == FAIL)
 		result = FAIL;
-	
+
 	//Slow but basic test, will run at the end
 	if(Test3() == FAIL)
 		result = FAIL;
@@ -339,11 +341,11 @@ int RunTests()
 
 int main()
 {
-
+	printf("\n");
 	if(RunTests() == SUCCESS)
-		printf("\n\n ==========Finished all UnitTests succesfully!! Horray!! ===========");
+		printf("========== Finished all UnitTests succesfully!! Horray!! ==========");
 	else
-		printf("\n\n ==========Finished, some UnitTests failed :( Please fix them ======");
+		printf("========== Finished, some UnitTests failed :( Please fix them ==========");
 		
 	getchar();
 }
