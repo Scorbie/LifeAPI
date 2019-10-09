@@ -133,6 +133,18 @@ LifeState LifeState::makeRect(int x, int y, int w, int h)
 	return result;
 }
 
+// Apply convolution of `*this` and `rhs`.
+LifeState LifeState::operator*(const LifeState& rhs) const
+{
+	LifeState result;
+	CellList c = rhs.toCellList();
+	for(CellList::const_iterator it=c.begin(); it != c.end(); ++it)
+	{
+		result |= this->transform(it->x, it->y);
+	}
+	return result;
+}
+
 static inline uint64_t CirculateLeft(uint64_t x, int k=1)
 {
 	return (x << k) | (x >> (64 - k));
@@ -500,6 +512,13 @@ void LifeState::run(int gens)
 	}	
 }
 
+LifeState LifeState::after(int gens) const
+{
+	LifeState result(*this);
+	result.run(gens);
+	return result;
+}
+
 // To other objects.
 
 std::string LifeState::toDebugString() const
@@ -768,10 +787,10 @@ void LifeState::removeGliders()
 LifeState LifeState::locate(const CellList& target, bool wanted) const
 {
 	LifeState locations; 
-	for (int x=-32; x<=31; ++x)
+	for (int i=this->min; i<=this->max; ++i)
 	{
-		uint64_t x_locations = this->locateAtX(target, x, wanted);
-		locations.state[x+32] = x_locations;
+		uint64_t x_locations = this->locateAtX(target, i-32, wanted);
+		locations.state[i] = x_locations;
 	}
 	return locations;
 }

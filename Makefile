@@ -1,25 +1,26 @@
 CXXC = g++
 CXXFLAGS = -Wall -O3
-DEL = del
+DEL = rm -f
+OBJ = LifeAPI.o UnitTest.o
 
 build: UnitTest
+debug: UnitTestDebug
+ansi: UnitTest11 UnitTest03
 
-test: UnitTest11 UnitTest03
+UnitTest: $(OBJ)
+	$(CXXC) $(CXXFLAGS) $^ -o $@
 
-UnitTest: LifeAPI.o UnitTest.o
-	$(CXXC) $(CXXFLAGS) $? -o $@
+UnitTestDebug: $(OBJ)
+	$(CXXC) $(CXXFLAGS) -g3 $^ -o $@
 
-UnitTestC++11: LifeAPI.o UnitTest.o
-	$(CXXC) $(CXXFLAGS) -std=c++11 $? -o $@
+UnitTest11: $(OBJ)
+	$(CXXC) $(CXXFLAGS) -std=c++11 $^ -o $@
 
-UnitTestC++03: LifeAPI.o UnitTest.o
-	$(CXXC) $(CXXFLAGS) -std=c++03 $? -o $@
+UnitTest03: $(OBJ)
+	$(CXXC) $(CXXFLAGS) -std=c++03 $^ -o $@
 
-LifeAPI.o: LifeAPI.cpp LifeAPI.h
-	$(CXXC) $(CXXFLAGS) -c $<
-
-UnitTest.o: UnitTest.cpp LifeAPI.h
-	$(CXXC) $(CXXFLAGS) -c $<
+*.o: *.cpp
+	$(CXXC) $(CXXFLAGS) -c $?
 
 clean:
-	$(DEL) *.o *.exe
+	$(DEL) *.o *.exe UnitTest UnitTest03 UnitTest11 UnitTestDebug

@@ -37,8 +37,6 @@ class LifeState
 {
 public:
 	// Public members and static functions
-	int gen;
-	std::vector<GliderData> gliders;
 	static LifeState makeRandomState();
 	static LifeState makeRect(int x, int y, int w, int h);
 	// Initializers
@@ -52,12 +50,23 @@ public:
 	inline void operator&=(const LifeState& rhs);
 	inline void operator|=(const LifeState& rhs);
 	inline void operator^=(const LifeState& rhs);
+	inline void operator+=(const LifeState& rhs);
+	inline void operator-=(const LifeState& rhs);
 	inline bool operator==(const LifeState& rhs) const;
+	inline bool operator!=(const LifeState& rhs) const;
 	inline LifeState operator~() const;
+	inline LifeState operator&(const LifeState& rhs) const;
+	inline LifeState operator|(const LifeState& rhs) const;
+	inline LifeState operator^(const LifeState& rhs) const;
+	inline LifeState operator+(const LifeState& rhs) const;
+	inline LifeState operator-(const LifeState& rhs) const;
+	LifeState operator*(const LifeState& rhs) const;
 	// Get-Set functions
 	void setCell(int x, int y, int val);
 	int getCell(int x, int y) const;
 	int getPop() const;
+	int getGen() const { return this->gen; }
+	std::vector<GliderData> getGliders() const { return this->gliders; }
 	uint64_t getHash() const;
 	// Other utility functions.
 	void clear();
@@ -68,6 +77,7 @@ public:
 	LifeState transform(int x, int y, int dxx, int dxy, int dyx, int dyy) const;
 	// Iteration
 	void run(int gens=1);
+	LifeState after(int gens) const; // An out-of-place version of run
 	// Conversion to other objects
 	std::string toRLE() const;
 	std::string toDebugString() const;
@@ -82,9 +92,11 @@ public:
 	void remove(const LifeLocator& l);
 private:
 	// Private Members
+	int gen;
 	int min;
 	int max;
 	uint64_t state[64];
+	std::vector<GliderData> gliders;
 	// Min-Max-related functions
 	inline void expandMinMax();
 	void refitMinMax();
@@ -151,6 +163,16 @@ inline void LifeState::operator|=(const LifeState& rhs)
     this->recalculateMinMax();
 }
 
+inline void LifeState::operator+=(const LifeState& rhs)
+{
+	*this |= rhs;
+}
+
+inline void LifeState::operator-=(const LifeState& rhs)
+{
+	*this &= (~rhs);
+}
+
 inline bool LifeState::operator==(const LifeState& rhs) const
 {
     for (int i=0; i < 64; i++)
@@ -158,6 +180,11 @@ inline bool LifeState::operator==(const LifeState& rhs) const
         if (this->state[i] != rhs.state[i]) return false;
     }
     return true;
+}
+
+inline bool LifeState::operator!=(const LifeState& rhs) const
+{
+	return !(*this == rhs);
 }
 
 inline LifeState LifeState::operator~() const
@@ -169,4 +196,47 @@ inline LifeState LifeState::operator~() const
 	}
 	result.recalculateMinMax();
 	return result;
+}
+
+inline LifeState LifeState::operator&(const LifeState& rhs) const
+{
+	LifeState result;
+    for (int i=0; i < 64; i++)
+	{
+        result.state[i] = this->state[i] & rhs.state[i];
+    }
+    result.recalculateMinMax();
+	return result;
+}
+
+inline LifeState LifeState::operator|(const LifeState& rhs) const
+{
+	LifeState result;
+    for (int i=0; i < 64; i++)
+	{
+        result.state[i] = this->state[i] | rhs.state[i];
+    }
+    result.recalculateMinMax();
+	return result;
+}
+
+inline LifeState LifeState::operator^(const LifeState& rhs) const
+{
+	LifeState result;
+    for (int i=0; i < 64; i++)
+	{
+        result.state[i] = this->state[i] ^ rhs.state[i];
+    }
+    result.recalculateMinMax();
+	return result;
+}
+
+inline LifeState LifeState::operator+(const LifeState& rhs) const
+{
+	return (*this) | rhs;
+}
+
+inline LifeState LifeState::operator-(const LifeState& rhs) const
+{
+	return (*this) & (~rhs);
 }

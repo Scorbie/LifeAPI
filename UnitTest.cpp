@@ -4,8 +4,8 @@
 void testWithMsg(bool (*test_fn)(), const char* test_msg)
 {
     std::cout
-        << test_msg << ":\t"
-        << (test_fn() ? "Success" : "Fail!!!")
+        << test_msg << ": " << std::flush
+        << (test_fn() ? "Success" : "Fail!")
         << std::endl;
 }
 
@@ -34,7 +34,7 @@ bool testInitRLE02()
 {
     LifeState a("bo$2bo$3o!"); // Canonical Glider
     LifeState b(a);
-    for (int i=0; i<4; i++) a.run();
+    a.run(4);
     b = b.transform(1, 1);
     return a == b;
 }
@@ -53,7 +53,7 @@ bool testInitRLE04()
     return a == b;
 }
 
-bool testOpAnd()
+bool testOpAnd01()
 {
     LifeState a("bo$2bo$3o!"); // Canonical Glider starting at (0, 0)
     LifeState b(a);
@@ -65,7 +65,17 @@ bool testOpAnd()
     return (b == ab) && (c == ac);
 }
 
-bool testOpOr()
+bool testOpAnd02()
+{
+    LifeState a("bo$2bo$3o!"); // Canonical Glider starting at (0, 0)
+    LifeState b(a);
+    LifeState ab(a);
+    LifeState c("$2bo$3bo$b3o!"); // Glider at (1, 1)
+    LifeState ac("$2bo!");
+    return ((a & b) == ab) && ((a & c) == ac);
+}
+
+bool testOpOr01()
 {
     LifeState a("bo$2bo$3o!"); // Canonical Glider starting at (0, 0)
     LifeState b(a);
@@ -77,17 +87,46 @@ bool testOpOr()
     return (b == ab) && (c == ac);
 }
 
-bool testOpXor()
+bool testOpOr02()
+{
+    LifeState a("bo$2bo$3o!"); // Canonical Glider starting at (0, 0)
+    LifeState b(a);
+    LifeState c("$2bo$3bo$b3o!"); // Glider at (1, 1)
+    LifeState ab(a);
+    LifeState ac("bo$2bo$4o$b3o!");
+    return ((a | b) == ab) && ((a | c) == ac);
+}
+
+bool testOpXor01()
 {
     LifeState a("bo$2bo$3o!"); // Canonical glider starting at (0, 0)
     LifeState b(a);
     LifeState c("bo$2bo$3o!", 1, 1); // Glider at (1, 1)
-    //
     LifeState xab; // Empty LifeState
     LifeState xac("bo2$4o$b3o!");
     b ^= a;
     c ^= a;
     return (b == xab) && (c == xac);
+}
+
+bool testOpXor02()
+{
+    LifeState a("bo$2bo$3o!"); // Canonical glider starting at (0, 0)
+    LifeState b(a);
+    LifeState c("bo$2bo$3o!", 1, 1); // Glider at (1, 1)
+    LifeState xab; // Empty LifeState
+    LifeState xac("bo2$4o$b3o!");
+    return ((a ^ b) == xab) && ((a ^ c) == xac);
+}
+
+bool testOpPlusMinus()
+{
+    LifeState a("bo$2bo$3o!");
+    LifeState b = a.transform(1, 1);
+    LifeState c("bo2$3o!");
+    LifeState d(a);
+    d.setCell(2, 1, 0);
+    return ((a + b) == (a | b) && (a - b) == c && (a - b) == d);
 }
 
 bool testTransform01()
@@ -113,30 +152,18 @@ bool testTransform02()
 
 // Copied from LifeState::removeGliders...
 static const LifeState glider("bo$2bo$3o!", -2, -2);
-static const LifeLocator glider_locators[4] =
-{
-    glider.toLifeLocator().withBoundary(), // SE
-    glider.transform(0, 0, 0, -1, 1, 0).toLifeLocator().withBoundary(), // SW
-    glider.transform(0, 0, -1, 0, 0, -1).toLifeLocator().withBoundary(), // NW
-    glider.transform(0, 0, 0, 1, -1, 0).toLifeLocator().withBoundary() // NE
-};
 
 bool testLifeLocator01()
 {
-    CellList wanted = glider_locators[0].wanted;
-    for (CellList::const_iterator it = wanted.begin(); it != wanted.end(); ++it)
-    {
-    }
-    return true;
+    CellList wanted = glider.toLifeLocator().withBoundary().wanted;
+    return (wanted.toLifeState() == glider);
 }
 
 bool testLifeLocator02()
 {
-    CellList unwanted = glider_locators[0].unwanted;
-    for (CellList::const_iterator it = unwanted.begin(); it != unwanted.end(); ++it)
-    {
-    }
-    return true;
+    CellList unwanted = glider.toLifeLocator().withBoundary().unwanted;
+    LifeState glider_unwanted("b3o$bob2o$3obo$o3bo$5o!", -3, -3);
+    return (unwanted.toLifeState() == glider_unwanted);
 }
 
 bool testRemoveGliders01()
@@ -158,9 +185,10 @@ bool testRemoveGliders01()
         std::cerr << a.toDebugString() << std::endl;
         status = false;
     }
-    if (a.gliders.size() == 1)
+    std::vector<GliderData> a_gliders = a.getGliders();
+    if (a_gliders.size() == 1)
     {
-        GliderData a_glider = a.gliders[0];
+        GliderData a_glider = a_gliders[0];
         bool glider_data_test = (
             a_glider.gen == 128
             and a_glider.x == -32 and a_glider.y == -32
@@ -195,7 +223,7 @@ bool testPatternMatching01()
         locations.setCell(x, y, 1);
     }
     // Calculate the location of the gliders.
-    LifeState result = gliders.locate(glider_locators[0]);
+    LifeState result = gliders.locate(glider.toLifeLocator());
     return (result == locations);
 }
 
@@ -217,7 +245,7 @@ bool testPatternMatching02()
         gliders |= glider.transform(x, y);
     }
     // Calculate the location of the gliders.
-    gliders.remove(glider_locators[0]);
+    gliders.remove(glider.toLifeLocator());
     return (gliders == LifeState());
 }
 
@@ -254,7 +282,7 @@ bool testSimkin01()
                 continue;
             }
             state.run(200);
-            if (state.getPop() == 0 and state.gliders.size() > 0)
+            if (state.getPop() == 0 and state.getGliders().size() > 0)
             {
                 num_results++;
                 // std::cerr << backup.toRLE() << std::endl;
@@ -331,12 +359,12 @@ bool testSimkin03()
 	LifeState pattern = LifeState(
         "obo$b2o$bo9$4bo$4b2o$3bobo$7b3o$7bo$8bo$14bo$13b2o$13bobo!", -20, -20
     );
-	LifeState target_pattern = LifeState(
+	LifeState target_on = LifeState(
         "$b2ob2o$bo3bo$2bobo$b2ob2o3$3bo$2bobo$3bo!", -18, -10
     );
     // We don't need inverse patterns anymore.
 	// LifeState inverse = LifeState("7o$o2bo2bo$ob3obo$2obob2o$o2bo2bo$7o$7o$3ob3o$2obob2o$3ob3o$7o!", -18, -10);
-    LifeLocator target = target_pattern.toLifeLocator().withBoundary();
+    LifeState target_off = target_on * LifeState::makeRect(-1, -1, 3, 3) - target_on;
     // This needs more work.
     LifeState temp("b2o$obo$2bo!");
     LifeState g[4];
@@ -345,7 +373,7 @@ bool testSimkin03()
         g[i] = temp;
         temp.run();
     }
-    CellList range = LifeState::makeRect(-27, 2, 15, 15).toCellList();
+    CellList range = LifeState::makeRect(-27, 2, 16, 16).toCellList();
     for (CellList::iterator it1 = range.begin(); it1 != range.end(); ++it1)
     {
         for (CellList::iterator it2 = range.begin(); it2 != range.end(); ++it2)
@@ -354,24 +382,27 @@ bool testSimkin03()
             {
                 for(int i2=0; i2<4; ++i2)
                 {
-                    LifeState state(pattern);
-                    LifeState backup(state);
-                    pattern |= g[i1].transform(it1->x, it1->y);
-                    pattern |= g[i2].transform(it2->x, it2->y);
-                    pattern.run(60);
-                    if (pattern.locate(target) == LifeState())
+                    LifeState gliders = (g[i1].transform(it1->x, it1->y)) | (g[i2].transform(it2->x, it2->y));
+                    // Make sure the gliders don't interact.
+                    if (gliders.after(4) != gliders.transform(1, -1))
                     {
-                        // pass
+                        continue;
                     }
-                    else // TODO: implement !=
+                    LifeState state = pattern | gliders;
+                    LifeState backup = state;
+                    state.run(60);
+                    if (state.contains(target_on) && (~state).contains(target_off))
                     {
-                        std::cerr << backup.toRLE() << std::endl;
+                        // The solution should be:
+                        // 5bobo$6b2o$6bo9$9bo$9b2o$8bobo$12b3o$12bo$13bo$19bo$18b2o$18bobo6$9b2o$8bobo$10bo2$2o$b2o$o!
+                        // std::cerr << backup.toRLE() << std::endl;
                         num_solutions++;
                     }
                 }
             }
         }
     }
+    // It should return 2C1 copies of the same solution.
     return (num_solutions == 2);
 }
 
@@ -383,9 +414,13 @@ int main(void)
     testWithMsg(testInitRLE02, "LifeState init test with RLE 02 - With evolution");
     testWithMsg(testInitRLE03, "LifeState init test with RLE 03 - Without count numbers");
     testWithMsg(testInitRLE04, "LifeState init test with RLE 04 - Without footer '!'");
-    testWithMsg(testOpAnd, "Operator &= test");
-    testWithMsg(testOpOr, "Operator |= test");
-    testWithMsg(testOpXor, "Operator ^= test");
+    testWithMsg(testOpAnd01, "Operator &= test");
+    testWithMsg(testOpAnd02, "Operator & test");
+    testWithMsg(testOpOr01, "Operator |= test");
+    testWithMsg(testOpOr02, "Operator | test");
+    testWithMsg(testOpXor01, "Operator ^= test");
+    testWithMsg(testOpXor02, "Operator ^ test");
+    testWithMsg(testOpPlusMinus, "Operator +, - test");
     testWithMsg(testTransform01, "LifeState transformation test 01");
     testWithMsg(testTransform02, "LifeState transformation test 02");
     testWithMsg(testLifeLocator01, "LifeLocator basic test - Wanted Cells");
