@@ -122,9 +122,9 @@ LifeState LifeState::makeRandomState()
 LifeState LifeState::makeRect(int x, int y, int w, int h)
 {
 	LifeState result;
-	for (int dy=0; dy<h; ++dy)
+	for (int dx=0; dx<h; ++dx)
 	{
-		for (int dx=0; dx<w; ++dx)
+		for (int dy=0; dy<w; ++dy)
 		{
 			result.setCell(x+dx, y+dy, 1);
 		}
@@ -134,15 +134,19 @@ LifeState LifeState::makeRect(int x, int y, int w, int h)
 }
 
 // Apply convolution of `*this` and `rhs`.
-LifeState LifeState::operator*(const LifeState& rhs) const
+LifeState LifeState::operator*(const CellList& rhs) const
 {
 	LifeState result;
-	CellList c = rhs.toCellList();
-	for(CellList::const_iterator it=c.begin(); it != c.end(); ++it)
+	for(CellList::const_iterator it=rhs.begin(); it != rhs.end(); ++it)
 	{
 		result |= this->transform(it->x, it->y);
 	}
 	return result;
+}
+// Apply convolution of `*this` and `rhs`.
+LifeState LifeState::operator*(const LifeState& rhs) const
+{
+	return (*this) * (rhs.toCellList());
 }
 
 static inline uint64_t CirculateLeft(uint64_t x, int k=1)

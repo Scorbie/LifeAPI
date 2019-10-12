@@ -60,6 +60,7 @@ public:
 	inline LifeState operator^(const LifeState& rhs) const;
 	inline LifeState operator+(const LifeState& rhs) const;
 	inline LifeState operator-(const LifeState& rhs) const;
+	LifeState operator*(const CellList& rhs) const;
 	LifeState operator*(const LifeState& rhs) const;
 	// Get-Set functions
 	void setCell(int x, int y, int val);
