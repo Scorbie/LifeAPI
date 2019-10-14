@@ -575,7 +575,7 @@ std::string LifeState::toRLE() const
 				{
 					ss << eol_count;
 				}
-				ss << "$";
+				ss << '$';
 				eol_count = 0;
 			}
 
@@ -590,11 +590,11 @@ std::string LifeState::toRLE() const
 				// Using boolean value of last_val is unreliable.
 				if (last_val == 1)
 				{
-					ss << "o";
+					ss << 'o';
 				}
 				else if (last_val == 0)
 				{
-					ss << "b";
+					ss << 'b';
 				}
 				run_count = 0;
 			}
@@ -609,10 +609,20 @@ std::string LifeState::toRLE() const
 			{
 				ss << run_count;
 			}
-			ss << "o";
+			ss << 'o';
 			run_count = 0;
 		}
 		eol_count++;
+	}
+
+	// Flush remaining linefeeds to make the height 64.
+	if (eol_count > 0) 
+	{
+		if (eol_count > 1)
+		{
+			ss << eol_count;
+		}
+		ss << '$';
 	}
 	return ss.str();
 }
@@ -653,46 +663,46 @@ LifeLocator LifeState::toLifeLocator() const
 
 LifeLocator::LifeLocator(const LifeLocator& rhs)
 {
-	this->wanted = rhs.wanted;
-	this->unwanted = rhs.unwanted;
+	this->on = rhs.on;
+	this->off = rhs.off;
 }
 
 LifeLocator::LifeLocator(const char* rle, int x, int y)
 {
-	this->wanted = LifeState(rle).transform(x, y).toCellList();
-	this->unwanted = LifeState().toCellList();
+	this->on = LifeState(rle).transform(x, y).toCellList();
+	this->off = LifeState().toCellList();
 }
 
 LifeLocator::LifeLocator(const char* rle, int x, int y, int dxx, int dxy, int dyx, int dyy)
 {
-	this->wanted = LifeState(rle).transform(x, y, dxx, dxy, dyx, dyy).toCellList();
-	this->unwanted = LifeState().toCellList();
+	this->on = LifeState(rle).transform(x, y, dxx, dxy, dyx, dyy).toCellList();
+	this->off = LifeState().toCellList();
 }
 
-LifeLocator::LifeLocator(const LifeState& wanted, const LifeState& unwanted)
+LifeLocator::LifeLocator(const LifeState& on, const LifeState& off)
 {
-	this->wanted = wanted.toCellList();
-	this->unwanted = unwanted.toCellList();
+	this->on = on.toCellList();
+	this->off = off.toCellList();
 }
 
 LifeLocator LifeLocator::withBoundary() const
 {
 	LifeLocator result(*this);
-	LifeState wanted = this->wanted.toLifeState();
-	LifeState unwanted;
+	LifeState on = this->on.toLifeState();
+	LifeState off;
 	for (int y=-1; y<=1; ++y)
 	{
 		for(int x=-1; x<=1; ++x)
 		{
-			unwanted |= wanted.transform(x, y);
+			off |= on.transform(x, y);
 		}
 	}
-	unwanted &= (~wanted);
-	result.unwanted = unwanted.toCellList();
+	off &= (~on);
+	result.off = off.toCellList();
 	return result;
 }
 
-uint64_t LifeState::locateAtX(const CellList& target, int x, bool wanted) const
+uint64_t LifeState::locateAtX(const CellList& target, int x, bool on) const
 {
 	uint64_t locations = ~0ULL;
 
@@ -704,7 +714,7 @@ uint64_t LifeState::locateAtX(const CellList& target, int x, bool wanted) const
 		idx += ((idx < 0) ? 64 : 0);
 		circulate += ((circulate < 0) ? 64 : 0);
 
-		if (wanted)
+		if (on)
 		{
 			locations &= CirculateRight(this->state[idx], circulate);
 		}
@@ -724,8 +734,8 @@ uint64_t LifeState::locateAtX(const CellList& target, int x, bool wanted) const
 
 uint64_t LifeState::locateAtX(const LifeLocator& l, int x) const
 {
-	uint64_t locations_wanted = this->locateAtX(l.wanted, x, true);
-	uint64_t locations_unwanted = this->locateAtX(l.unwanted, x, false);
+	uint64_t locations_wanted = this->locateAtX(l.on, x, true);
+	uint64_t locations_unwanted = this->locateAtX(l.off, x, false);
 	return locations_wanted & locations_unwanted;
 }
 
@@ -749,7 +759,7 @@ void LifeState::removeAtX(const CellList& target, int x, uint64_t locations)
 void LifeState::removeAtX(const LifeLocator& l, int x)
 {
 	uint64_t locations = this->locateAtX(l, x);
-	this->removeAtX(l.wanted, x, locations);
+	this->removeAtX(l.on, x, locations);
 }
 
 void LifeState::removeGliders()
@@ -766,7 +776,7 @@ void LifeState::removeGliders()
 	for (size_t i=0; i<4; ++i)
 	{
 		uint64_t locations = this->locateAtX(glider_locators[i], -32);
-		this->removeAtX(glider_locators[i].wanted, -32, locations);
+		this->removeAtX(glider_locators[i].on, -32, locations);
 		for (int y=-32; y<32; y++)
 		{
 			if ((locations & (1ULL << (y+32))) != 0)
@@ -788,12 +798,12 @@ void LifeState::removeGliders()
 	this->refitMinMax();
 }
 
-LifeState LifeState::locate(const CellList& target, bool wanted) const
+LifeState LifeState::locate(const CellList& target, bool on) const
 {
 	LifeState locations; 
 	for (int i=this->min; i<=this->max; ++i)
 	{
-		uint64_t x_locations = this->locateAtX(target, i-32, wanted);
+		uint64_t x_locations = this->locateAtX(target, i-32, on);
 		locations.state[i] = x_locations;
 	}
 	return locations;
@@ -801,8 +811,8 @@ LifeState LifeState::locate(const CellList& target, bool wanted) const
 
 LifeState LifeState::locate(const LifeLocator& l) const
 {
-	LifeState wanted_locations = this->locate(l.wanted, true);
-	LifeState unwanted_locations = this->locate(l.unwanted, false);
+	LifeState wanted_locations = this->locate(l.on, true);
+	LifeState unwanted_locations = this->locate(l.off, false);
 	LifeState locations(wanted_locations);
 	locations &= unwanted_locations;
 	return locations;
@@ -811,9 +821,47 @@ LifeState LifeState::locate(const LifeLocator& l) const
 void LifeState::remove(const LifeLocator& l)
 {
 	CellList locations = this->locate(l).toCellList();
-	LifeState object = l.wanted.toLifeState();
+	LifeState object = l.on.toLifeState();
 	for (CellList::iterator it=locations.begin(); it != locations.end(); ++it)
 	{
 		*this ^= object.transform(it->x, it->y);
 	}
+}
+
+// LifeTargets: targets with fixed positions.
+LifeTarget::LifeTarget()
+{
+	this->on.clear();
+	this->off.clear();
+}
+
+// Initialize a `LifeTarget` with only on cells.
+LifeTarget::LifeTarget(const LifeState& s)
+{
+	this->on = s;
+	this->off.clear();
+}
+
+// Initialize a `LifeTarget` with both on and off targets.
+LifeTarget::LifeTarget(const LifeState& on, const LifeState& off)
+{
+	this->on = on;
+	this->off = off;
+}
+
+// Return a new LifeTarget with the same ON target
+// and the OFF target surrounding size `size` boundary.
+LifeTarget LifeTarget::withBoundary(int size) const
+{
+	assert(size > 0);
+	auto boundary = LifeState::makeRect(-size, -size, size*2+1, size*2+1);
+	auto on = this->on;
+	auto off = (this->on * boundary) - (this->on);
+	return LifeTarget(on, off);
+}
+
+// See if target matches `LifeState s`.
+inline bool LifeTarget::in(const LifeState& s) const
+{
+	return (s.contains(this->on)) &&((~s).contains(this->off));
 }

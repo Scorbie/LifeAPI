@@ -88,7 +88,7 @@ public:
 	bool isDisjoint(const LifeState& rhs, int dx=0, int dy=0) const;
 	bool contains(const LifeState& rhs, int dx=0, int dy=0) const;
 	// More pattern recognition.
-	LifeState locate(const CellList& target, bool wanted) const;
+	LifeState locate(const CellList& target, bool on) const;
 	LifeState locate(const LifeLocator& l) const;
 	void remove(const LifeLocator& l);
 private:
@@ -109,7 +109,7 @@ private:
 	void reverseRows(int firstRow, int lastRow);
 	void flipX();
 	// Locator related functions.
-	uint64_t locateAtX(const CellList& target, int x, bool wanted) const;
+	uint64_t locateAtX(const CellList& target, int x, bool on) const;
 	uint64_t locateAtX(const LifeLocator& l, int x) const;
 	void removeAtX(const CellList& target, int x, uint64_t filter);
 	void removeAtX(const LifeLocator& l, int x);
@@ -128,11 +128,25 @@ public:
 	LifeLocator(const LifeLocator& rhs);
 	LifeLocator(const char* rle, int x=0, int y=0);
 	LifeLocator(const char* rle, int x, int y, int dxx, int dxy, int dyx, int dyy);
-	LifeLocator(const LifeState& wanted, const LifeState& unwanted);
+	LifeLocator(const LifeState& on, const LifeState& off);
 	LifeLocator withBoundary() const;
 	// Members
-	CellList wanted;
-	CellList unwanted;
+	CellList on;
+	CellList off;
+};
+
+// Targets with a fixed position.
+class LifeTarget {
+public:
+    // Initialize a LifeTarget.
+	LifeTarget();
+    LifeTarget(const LifeState& s);
+    LifeTarget(const LifeState& on, const LifeState& off);
+    LifeTarget withBoundary(int size=1) const;
+    inline bool in(const LifeState& s) const;
+private:
+    LifeState on;
+    LifeState off;
 };
 
 // Inline operators

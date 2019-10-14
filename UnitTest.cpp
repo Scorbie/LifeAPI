@@ -155,13 +155,13 @@ static const LifeState glider("bo$2bo$3o!", -2, -2);
 
 bool testLifeLocator01()
 {
-    CellList wanted = glider.toLifeLocator().withBoundary().wanted;
+    CellList wanted = glider.toLifeLocator().withBoundary().on;
     return (wanted.toLifeState() == glider);
 }
 
 bool testLifeLocator02()
 {
-    CellList unwanted = glider.toLifeLocator().withBoundary().unwanted;
+    CellList unwanted = glider.toLifeLocator().withBoundary().off;
     LifeState glider_unwanted("b3o$bob2o$3obo$o3bo$5o!", -3, -3);
     return (unwanted.toLifeState() == glider_unwanted);
 }
