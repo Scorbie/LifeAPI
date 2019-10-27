@@ -461,7 +461,7 @@ void LifeState::iterate()
 	uint64_t* state = this->state;
 	int min = this->min;
 	int max = this->max;
-	bool wrap = (min < 2) or (max > 64 - 3);
+	bool wrap = (min < 2) || (max > 64 - 3);
 
 	uint64_t bit0[64] = {0};
 	uint64_t bit1[64] = {0};
