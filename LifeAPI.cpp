@@ -1,11 +1,8 @@
 #include "LifeAPI.h"
-#include <algorithm>
 #include <cassert>
-#include <set>
+#include <iostream>
 #include <sstream>
-#include <stdexcept>
 #include <string>
-#include <utility>
 
 LifeState::LifeState()
 {
@@ -79,7 +76,11 @@ LifeState::LifeState(const char* rle)
 		}
 		else
 		{
-			throw std::invalid_argument("Bad character in RLE string.");
+			std::cerr
+				<< "[RLE] Skipping character " << int(ch)
+				<< " (" << ch << ") at pos " << i << " "
+				<< "while parsing RLE:\n"
+				<< rle <<"\n";
 		}
 
 		i++;
