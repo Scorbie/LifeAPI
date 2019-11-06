@@ -1,5 +1,7 @@
 #include "LifeAPI.h"
 #include <cassert>
+#include <cctype>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -28,6 +30,7 @@ LifeState::LifeState(const char* rle)
 	int i = 0;
 	int x = 0;
 	int y = 0;
+	bool error = false;
 
 	this->clear();
 
@@ -76,14 +79,40 @@ LifeState::LifeState(const char* rle)
 		}
 		else
 		{
+			// Print header if first error.
+			if (!error)
+			{
+				std::cerr << "[RLE] Invalid character(s):" << std::endl;
+			}
+			std::stringstream ch_repr;
+			if (std::iscntrl(ch))
+			{
+				ch_repr 
+					<< std::setw(2)
+					<< std::right
+					<< std::setfill('0')
+					<< std::uppercase
+					<< std::noshowbase
+					<< std::hex
+					<< int(ch);
+			}
+			else
+			{
+				ch_repr << "'" << char(ch) << "'";
+			} 
 			std::cerr
-				<< "[RLE] Skipping character " << int(ch)
-				<< " (" << ch << ") at pos " << i << " "
-				<< "while parsing RLE:\n"
-				<< rle <<"\n";
+				<< "\tSkipping character " << ch_repr.str()
+				<< "\tat pos " << i
+				<< std::endl;
+			error = true;
 		}
 
 		i++;
+	}
+
+	if (error)
+	{
+		std::cerr << "While parsing RLE:\n" << rle << std::endl;
 	}
 
 	this->min = 0;
